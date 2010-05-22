@@ -33,15 +33,6 @@ _fetch_targets = \
 	$(addprefix .stamps/upstream_setup-,${UPSTREAM_REPOS})	\
 	$(addprefix .stamps/elito_fetch-,${ELITO_REPOS})
 
-prepare:	.stamps/git-submodule .stamps/autoconf
-
-update:		prepare
-	$(GIT) remote update
-	$(GIT) pull
-	$(GIT) submodule update
-	$(MAKE) $(addprefix .stamps/elito_fetch-,${ELITO_REPOS}) _MODE=fetch
-	$(MAKE) .stamps/autoconf-update
-
 help:
 	@echo -e "\
 Usage:  make <op> [M=<module>]\n\
@@ -70,25 +61,6 @@ Usage:  make <op> [M=<module>]\n\
 \n\
 "
 
-.stamps/autoconf-update:	$(ELITO_DIR)/configure.ac
-	rm -f .stamps/autoconf
-	$(MAKE) prepare
-	$(MAKE) $(addprefix .reconfigure-,${PROJECTS})
-	@mkdir -p $(@D)
-	@touch $@
-
-.stamps/git-submodule:	Makefile
-	$(GIT) submodule init
-	$(MAKE) ${_fetch_targets} _MODE=fetch
-	$(GIT) submodule update
-	@mkdir -p $(@D)
-	@touch $@
-
-.stamps/autoconf:
-	cd $(ELITO_DIR) && $(AUTORECONF) -i -f
-	@mkdir -p $(@D)
-	@touch $@
-
 _submodules = $(shell $(GIT) submodule status --cached | awk '{ print $$2 }')
 
 commit-submodules:
@@ -104,7 +76,7 @@ init:
 	$(MAKE) -C $M init
 
 build:
-	make -C $M image $(if $(TARGETS),TARGETS='$(TARGETS)')
+	make -C $M image MAKEFLAGS= MAKEOVERRIDES= $(if $(TARGETS),TARGETS='$(TARGETS)')
 endif
 
 ifeq ($M,)
@@ -117,6 +89,15 @@ init-all:		$(addprefix .init-,$(PROJECTS))
 rebuild-all:		$(addprefix .rebuild-,$(PROJECTS))
 build-failed:		$(addprefix .build-failed-,$(PROJECTS))
 build-incomplete:	$(addprefix .build-incomplete-,$(PROJECTS))
+
+prepare:	.stamps/git-submodule .stamps/autoconf
+
+update:		prepare
+	$(GIT) remote update
+	$(GIT) pull
+	$(GIT) submodule update
+	$(MAKE) $(addprefix .stamps/elito_fetch-,${ELITO_REPOS}) _MODE=fetch
+	$(MAKE) .stamps/autoconf-update
 
 .reconfigure-%:
 	${MAKE} reconfigure M=$*
@@ -150,6 +131,26 @@ build-incomplete:	$(addprefix .build-incomplete-,$(PROJECTS))
 	$(MAKE) .clean-$*
 	$(MAKE) .init-$*
 	$(MAKE) .build-$*
+
+.stamps/autoconf-update:	$(ELITO_DIR)/configure.ac
+	rm -f .stamps/autoconf
+	$(MAKE) prepare
+	$(MAKE) $(addprefix .reconfigure-,${PROJECTS})
+	@mkdir -p $(@D)
+	@touch $@
+
+.stamps/git-submodule:	Makefile
+	$(GIT) submodule init
+	$(MAKE) ${_fetch_targets} _MODE=fetch
+	$(GIT) submodule update
+	@mkdir -p $(@D)
+	@touch $@
+
+.stamps/autoconf:
+	cd $(ELITO_DIR) && $(AUTORECONF) -i -f
+	@mkdir -p $(@D)
+	@touch $@
+
 endif
 
 ########################################################################################
