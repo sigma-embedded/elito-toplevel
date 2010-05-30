@@ -203,7 +203,8 @@ ifeq (${_MODE},fetch)
 _submodules := ${_submodules}
 
 define _register_alternate
-	echo $1 > $2/objects/info/alternates
+	test -d $2/.git/object && g=$2/.git || g=$2; \
+	echo $1 > $$g/objects/info/alternates
 endef
 
 define _git_create_branch
@@ -214,7 +215,7 @@ endef
 define _git_init
 	mkdir -p $2
 	-cd "$2" && $6 $$(GIT) init -q
-	$$(foreach a,$3,$$(call _register_alternate,$$a,$2/.git))
+	$$(foreach a,$3,$$(call _register_alternate,$$a,$2))
 	-cd "$2" && $$(GIT) remote add $4 '$5'
 
 	@mkdir -p $$(@D)
@@ -230,7 +231,7 @@ endef
 ##### _build_submodule_fetch(repo) #######
 define _build_upstream_fetch
 .stamps/upstream_init-$1:
-	$(call _git_init,$1,$${UPSTREAM_DIR_$1},$${UPSTREAM_ALTERNATES_$1},upstream,$${UPSTREAM_GIT_$1})
+	$(call _git_init,$1,$${UPSTREAM_DIR_$1},$${UPSTREAM_ALTERNATES_$1},upstream,$${UPSTREAM_GIT_$1},env GIT_DIR=.)
 
 .stamps/upstream_fetch-$1:	.stamps/upstream_init-$1
 	-cd $${UPSTREAM_DIR_$1} && $$(GIT) fetch upstream --no-tags +$${UPSTREAM_BRANCH_$1}:refs/remotes/upstream/$${UPSTREAM_BRANCH_$1}
