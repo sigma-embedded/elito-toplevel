@@ -77,6 +77,10 @@ init:
 
 build:
 	make -C $M image MAKEFLAGS= MAKEOVERRIDES= $(if $(TARGETS),TARGETS='$(TARGETS)')
+
+clean mrproper:
+	make -C $M $@
+
 endif
 
 ifeq ($M,)
