@@ -81,7 +81,11 @@ build:
 clean mrproper:
 	make -C $M $@
 
-endif
+else				# ifneq ($M,)
+
+build:	build-all
+
+endif				# ifneq ($M,)
 
 ifeq ($M,)
 configure-all:		$(addprefix .configure-,$(PROJECTS))
