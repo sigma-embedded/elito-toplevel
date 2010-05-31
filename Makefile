@@ -30,7 +30,6 @@ endif
 export ELITO_CRT
 
 _fetch_targets = \
-	$(addprefix .stamps/upstream_setup-,${UPSTREAM_REPOS})	\
 	$(addprefix .stamps/elito_fetch-,${ELITO_REPOS})
 
 help:
@@ -149,7 +148,7 @@ update:		prepare
 
 .stamps/git-submodule:	Makefile
 	$(GIT) submodule init
-	$(MAKE) ${_fetch_targets} _MODE=fetch
+	$(if ${_fetch_targets},$(MAKE) ${_fetch_targets} _MODE=fetch)
 	$(GIT) submodule update
 	@mkdir -p $(@D)
 	@touch $@
@@ -228,7 +227,7 @@ define _git_fetch
 	@touch $$@
 endef
 
-##### _build_submodule_fetch(repo) #######
+##### _build_upstream_fetch(repo) #######
 define _build_upstream_fetch
 .stamps/upstream_init-$1:
 	$(call _git_init,$1,$${UPSTREAM_DIR_$1},$${UPSTREAM_ALTERNATES_$1},upstream,$${UPSTREAM_GIT_$1},$${_git_init_prefix})
