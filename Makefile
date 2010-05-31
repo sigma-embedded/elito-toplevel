@@ -231,7 +231,7 @@ endef
 ##### _build_submodule_fetch(repo) #######
 define _build_upstream_fetch
 .stamps/upstream_init-$1:
-	$(call _git_init,$1,$${UPSTREAM_DIR_$1},$${UPSTREAM_ALTERNATES_$1},upstream,$${UPSTREAM_GIT_$1},env GIT_DIR=.)
+	$(call _git_init,$1,$${UPSTREAM_DIR_$1},$${UPSTREAM_ALTERNATES_$1},upstream,$${UPSTREAM_GIT_$1},$${_git_init_prefix})
 
 .stamps/upstream_fetch-$1:	.stamps/upstream_init-$1
 	-cd $${UPSTREAM_DIR_$1} && $$(GIT) fetch upstream --no-tags +$${UPSTREAM_BRANCH_$1}:refs/remotes/upstream/$${UPSTREAM_BRANCH_$1}
@@ -249,9 +249,12 @@ endef					# _build_upstream_fetch
 ##### _build_elito_fetch(repo) #######
 define _build_elito_fetch
 
+.stamps/elito_init-$1 \
+.stamps/upstream_init-$1:	_git_init_prefix=env GIT_DIR=.
+
 .stamps/elito_init-$1:
 	$(call _git_init,$1,$${ELITO_REPO_DIR_$1},$${ELITO_REPO_ALTERNATES_$1},\
-		--mirror elito,$${ELITO_REPO_URI_$1},env GIT_DIR=.)
+		--mirror elito,$${ELITO_REPO_URI_$1},$${_git_init_prefix})
 
 .stamps/elito_fetch-$1:		.stamps/elito_init-$1
 	-cd $${ELITO_REPO_DIR_$1} && $$(GIT) fetch elito
