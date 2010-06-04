@@ -73,7 +73,6 @@ reconfigure:
 	cd $M && ./config.status --recheck
 
 init:
-	-$(MAKE) update
 	$(MAKE) -C $M
 	$(MAKE) -C $M init
 
