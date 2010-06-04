@@ -13,18 +13,21 @@ UPSTREAM_DIR_kernel = workspace/kernel.git
 UPSTREAM_GIT_kernel = git://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux-2.6
 UPSTREAM_BRANCH_kernel = master
 
+HOSTNAME ?:= $(shell hostname -f)
+DOMAIN ?:= $(shell hostname -d)
+
 ifneq (${_MODE},configure)
 _topdir = .
 endif
 
 -include ${_topdir}/project.conf
 -include ${_topdir}/.config
--include ${_topdir}/.config_$(shell hostname -d)
+-include ${_topdir}/.config_${DOMAIN}
 -include ${_topdir}/.config_${HOSTNAME}
 
 ifeq (${_MODE},configure)
 -include ./build-setup
--include ./build-setup_$(shell hostname -d)
+-include ./build-setup_$(DOMAIN}
 -include ./build-setup_${HOSTNAME}
 endif
 export ELITO_CRT
