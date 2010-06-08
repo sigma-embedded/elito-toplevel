@@ -27,7 +27,7 @@ endif
 
 ifeq (${_MODE},configure)
 -include ./build-setup
--include ./build-setup_$(DOMAIN}
+-include ./build-setup_${DOMAIN}
 -include ./build-setup_${HOSTNAME}
 endif
 export ELITO_CRT
