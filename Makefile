@@ -76,7 +76,7 @@ init:
 	$(MAKE) -C $M
 	$(MAKE) -C $M init
 
-build:
+build image:
 	make -C $M image MAKEFLAGS= MAKEOVERRIDES= $(if $(TARGETS),TARGETS='$(TARGETS)')
 
 clean mrproper:
