@@ -292,3 +292,27 @@ $(foreach r,$(ELITO_REPOS),$(eval $(call _build_elito_fetch,$r)))
 $(foreach s,$(_submodules),$(eval $(call _build_submodule_fetch,$s)))
 
 endif					# _MODE == fetch
+
+######################################################################################
+
+ifeq (${_MODE},push)
+
+define _build_repo_push
+
+push:		.push-$1
+
+.push-$1:	$$(foreach r,$$(PUSH_REMOTES_$1) $$(PUSH_REMOTES_COMMON),\
+		   ..push+$$r+$1)
+..push+%+$1:
+	cd $$(PUSH_DIR_$1) && $$(GIT) push $$* $$(PO)
+
+endef
+
+$(foreach r,$(PUSH_REPOS),$(eval $(call _build_repo_push,$r)))
+
+else
+
+push:
+	$(MAKE)	push _MODE=push
+
+endif				# _MODE == push
