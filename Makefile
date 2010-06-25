@@ -1,4 +1,5 @@
 GIT = git
+TAR = tar
 AUTORECONF    = autoreconf
 ELITO_DIR     = de.sigma-chemnitz
 GITREPO_BASE  = elito
@@ -107,6 +108,12 @@ update:		prepare
 	$(GIT) submodule update
 	$(MAKE) $(addprefix .stamps/elito_fetch-,${ELITO_REPOS}) _MODE=fetch
 	$(MAKE) .stamps/autoconf-update
+
+update-offline:
+	@test -r '$P' || { \
+		echo 'Can not read pack $$P' >&2; \
+		exit 1; }
+	$(abspath ${ELITO_DIR}/scripts/apply-update-pack) '$(abspath $P)'
 
 .reconfigure-%:
 	${MAKE} reconfigure M=$*
@@ -297,7 +304,15 @@ endif					# _MODE == fetch
 
 ifeq (${_MODE},push)
 
+_generate_pack_prog :=	$(abspath ${ELITO_DIR}/scripts/generate-update-pack)
+export GIT
+
 define _build_repo_push
+
+PUSH_BRANCHES_$1 ?= $$(addprefix heads/,$${ELITO_REPO_BRANCHES_$1})
+PUSH_TAGS_$1 ?= $${ELITO_REPO_TAGS_$1}
+PUSH_PRIO_$1 ?= 00
+PUSH_REALDIR_$1 ?=	$${PUSH_DIR_$1}
 
 push:		.push-$1
 
@@ -306,13 +321,30 @@ push:		.push-$1
 ..push+%+$1:
 	cd $$(PUSH_DIR_$1) && $$(GIT) push $$* $$(PO)
 
+.generate-pack-$1:
+	env \
+		BRANCHES='$${PUSH_BRANCHES_$1}' \
+		TAGS='$${PUSH_TAGS_$1}' \
+	$(_generate_pack_prog) '$$T/$${PUSH_PRIO_$1}-$1' '$$(abspath $$(PUSH_DIR_$1))' '$R' '$$(PUSH_REALDIR_$1)'
+
+.generate-pack:	.generate-pack-$1
+
 endef
+
+.generate-pack:
+	$(TAR) cf ${_packname} -C $T --owner root --group root --mode go-w,a+rX .
+
+generate-pack:
+	T=$$(mktemp -d -t update-pack.XXXXXX) && \
+	trap "rm -rf $$T" EXIT && \
+	$(MAKE) T="$$T" _packname=$(if $P,$P,update-pack-`date +%Y%m%dT%H%M%S`.tar) .$@
+
 
 $(foreach r,$(PUSH_REPOS),$(eval $(call _build_repo_push,$r)))
 
 else
 
-push:
-	$(MAKE)	push _MODE=push
+generate-pack push:
+	$(MAKE)	$@ _MODE=push
 
 endif				# _MODE == push
