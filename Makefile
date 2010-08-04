@@ -138,7 +138,7 @@ update-offline:
 	$(MAKE) M=$* build
 
 .clean-%:	.clean-complete-%
-	rm -rf $*/tmp .succeeded-$* .failed-$*
+	rm -rf $*/tmp $*/.tmp .succeeded-$* .failed-$*
 
 .init-%:
 	$(MAKE) init M=$*
