@@ -69,6 +69,8 @@ _submodules = $(shell $(GIT) submodule status --cached | awk '{ print $$2 }')
 commit-submodules:
 	$(GIT) commit -m "updated submodules:`echo; echo; git submodule summary`" ${_submodules}
 
+image:	build
+
 ifneq ($M,)
 reconfigure:
 	cd $M && ./config.status --recheck
@@ -77,7 +79,7 @@ init:
 	$(MAKE) -C $M
 	$(MAKE) -C $M init
 
-build image:
+build:
 	make -C $M image MAKEFLAGS= MAKEOVERRIDES= $(if $(TARGETS),TARGETS='$(TARGETS)')
 
 clean mrproper:
