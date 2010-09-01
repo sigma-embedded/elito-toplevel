@@ -171,6 +171,9 @@ update-offline:
 
 endif
 
+.PHONY:	image build clean mrproper init prepare update update-offline
+.PHONY:	commit-submodules init reconfigure
+
 ########################################################################################
 
 ifeq (${_MODE},configure)
