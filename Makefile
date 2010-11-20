@@ -14,8 +14,12 @@ UPSTREAM_DIR_kernel = workspace/kernel.git
 UPSTREAM_GIT_kernel = git://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux-2.6
 UPSTREAM_BRANCH_kernel = master
 
-HOSTNAME ?:= $(shell hostname -f)
-DOMAIN ?:= $(shell hostname -d)
+ifeq (${HOSTNAME},)
+HOSTNAME := $(shell hostname -f)
+endif
+ifeq (${DOMAIN},)
+DOMAIN := $(shell hostname -d)
+endif
 
 ifneq (${_MODE},configure)
 _topdir = .
