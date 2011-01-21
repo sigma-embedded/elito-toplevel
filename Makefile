@@ -37,6 +37,8 @@ ifeq (${_MODE},configure)
 endif
 export ELITO_CRT
 
+unexport M S
+
 _fetch_targets = \
 	$(addprefix .stamps/elito_fetch-,${ELITO_REPOS})
 
