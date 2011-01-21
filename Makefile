@@ -130,7 +130,7 @@ update-offline:
 .build-%:	.clean-complete-% .init-%
 	@touch .failed-$*
 	@! tty -s || echo -ne "\033]0;OE Build $*@$${HOSTNAME%%.*}:$${PWD/#$$HOME/~} - `date`\007"
-	${MAKE} .build-target-$*
+	+$(S) $(MAKE) .build-target-$*
 	@rm -f .failed-$*
 	@date > .succeeded-$*
 
