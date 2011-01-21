@@ -73,7 +73,8 @@ Usage:  make <op> [M=<module>]\n\
 _submodules = $(shell $(GIT) submodule status --cached | awk '{ print $$2 }')
 
 commit-submodules:
-	$(GIT) commit -m "updated submodules:`echo; echo; git submodule summary`" ${_submodules}
+	{ echo "updated submodules"; echo; echo; git submodule summary; } \
+	| $(GIT) commit -F - ${_submodules}
 
 image:	build
 
