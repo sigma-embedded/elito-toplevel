@@ -4,11 +4,15 @@ AUTORECONF    = autoreconf
 ELITO_DIR     = de.sigma-chemnitz
 GITREPO_BASE  = elito
 
-UPSTREAM_REPOS = org.openembedded kernel
+UPSTREAM_REPOS = org.openembedded.core org.openembedded.meta kernel
 
-UPSTREAM_DIR_org.openembedded	 = org.openembedded
-UPSTREAM_GIT_org.openembedded    = git://git.openembedded.net/openembedded
-UPSTREAM_BRANCH_org.openembedded = org.openembedded.dev
+UPSTREAM_DIR_org.openembedded.core = org.openembedded.core
+UPSTREAM_GIT_org.openembedded.core = git://git.openembedded.org/openembedded-core
+UPSTREAM_BRANCH_org.openembedded.core = master
+
+UPSTREAM_DIR_org.openembedded.meta = org.openembedded.meta
+UPSTREAM_GIT_org.openembedded.meta = git://git.openembedded.org/meta-openembedded
+UPSTREAM_BRANCH_org.openembedded = master
 
 UPSTREAM_DIR_kernel = workspace/kernel.git
 UPSTREAM_GIT_kernel = git://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux-2.6
