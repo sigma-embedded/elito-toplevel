@@ -206,7 +206,7 @@ _opts = \
 	${CONFIGURE_OPTIONS}
 
 configure:
-	env CONFIG_SHELL=/bin/bash ${_topdir}/de.sigma-chemnitz/configure ${_opts} CONFIG_SHELL=/bin/bash
+	env CONFIG_SHELL=/bin/bash /bin/bash ${_topdir}/de.sigma-chemnitz/configure ${_opts} CONFIG_SHELL=/bin/bash
 
 else
 .configure-%:
