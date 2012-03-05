@@ -116,6 +116,9 @@ init-all:		$(addprefix .init-,$(PROJECTS))
 rebuild-all:		$(addprefix .rebuild-,$(PROJECTS))
 build-failed:		$(addprefix .build-failed-,$(PROJECTS))
 build-incomplete:	$(addprefix .build-incomplete-,$(PROJECTS))
+repo-info:		$(addprefix .repo-info-,$(PUSH_REPOS))
+
+.NOTPARALLEL:		$(addprefix .repo-info-,$(PUSH_REPOS))
 
 prepare:	.stamps/git-submodule .stamps/autoconf
 
@@ -164,6 +167,11 @@ update-offline:
 	$(MAKE) .clean-$*
 	$(MAKE) .init-$*
 	$(MAKE) .build-$*
+
+.repo-info-%:
+	@printf '%s (%s):\n' "$*" "$(PUSH_DIR_$*)"
+	@b='${PUSH_BRANCHES_$*}'; : $${b:=HEAD}; \
+	$(GIT) ls-remote "${PUSH_DIR_$*}" $$b | sed -e 's!^!\t!'
 
 .stamps/autoconf-update:	$(ELITO_DIR)/configure.ac
 	rm -f .stamps/autoconf
