@@ -219,8 +219,11 @@ endif
 
 endif
 
+FORCE:
+
 .PHONY:	image build clean mrproper init prepare update update-offline
 .PHONY:	commit-submodules init reconfigure
+.PHONY:	FORCE
 
 ########################################################################################
 
