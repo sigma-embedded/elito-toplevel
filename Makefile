@@ -5,6 +5,10 @@ AUTORECONF    = autoreconf
 ELITO_DIR     = de.sigma-chemnitz
 GITREPO_BASE  = elito
 
+GIT_TAG_FLAGS = -a
+GIT_TAG_NOW_FMT = %Y%d%mT%H%M%S
+GIT_TAG_PREFIX ?=
+
 UPSTREAM_REPOS = org.openembedded.core org.openembedded.meta kernel
 
 UPSTREAM_DIR_org.openembedded.core = org.openembedded.core
@@ -18,6 +22,8 @@ UPSTREAM_BRANCH_org.openembedded = master
 UPSTREAM_DIR_kernel = workspace/kernel.git
 UPSTREAM_GIT_kernel = git://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux-2.6
 UPSTREAM_BRANCH_kernel = master
+
+MAKE_ORIG = $(MAKE) -f $(firstword $(MAKEFILE_LIST))
 
 ifeq (${HOSTNAME},)
 HOSTNAME := $(shell hostname -f)
@@ -135,6 +141,16 @@ update-offline:
 		exit 1; }
 	$(abspath ${ELITO_DIR}/scripts/apply-update-pack) '$(abspath $P)'
 
+create-tag:
+	+T=$$(mktemp -t create-tag.XXXXXX) && \
+	trap "rm -rf $$T" EXIT && \
+	$(MAKE_ORIG) .create-tag T=$$T TAG='$(TAG)'
+
+ifneq ($(GIT_TAG_PREFIX),)
+create-tag-now:	TAG := $(GIT_TAG_PREFIX)-$(shell date +$(GIT_TAG_NOW_FMT))
+create-tag-now:	create-tag
+endif
+
 .reconfigure-%:
 	${MAKE} reconfigure M=$*
 
@@ -172,6 +188,15 @@ update-offline:
 	@printf '%s (%s):\n' "$*" "$(PUSH_DIR_$*)"
 	@b='${PUSH_BRANCHES_$*}'; : $${b:=HEAD}; \
 	$(GIT) ls-remote "${PUSH_DIR_$*}" $$b | sed -e 's!^!\t!'
+
+.create-tag:	FORCE | .create-tag-check
+	$(MAKE_ORIG) -s --no-print-directory repo-info >$T
+	$(GIT) tag $(GIT_TAG_FLAGS) -F $T $(TAG)
+
+.create-tag-check:	FORCE
+	@test -n "$(TAG)" || { echo "TAG undefined" >&2; false; }
+	@! $(GIT) ls-remote --exit-code . refs/tags/$(TAG) || \
+		{ echo "tag '$(TAG)' already defined" >&2; false; }
 
 .stamps/autoconf-update:	$(ELITO_DIR)/configure.ac
 	rm -f .stamps/autoconf
