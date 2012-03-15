@@ -23,7 +23,7 @@ UPSTREAM_DIR_kernel = workspace/kernel.git
 UPSTREAM_GIT_kernel = git://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux-2.6
 UPSTREAM_BRANCH_kernel = master
 
-MAKE_ORIG = $(MAKE) -f $(firstword $(MAKEFILE_LIST))
+MAKE_ORIG = $(MAKE) -f $(abspath $(firstword $(MAKEFILE_LIST)))
 
 ifeq (${HOSTNAME},)
 HOSTNAME := $(shell hostname -f)
