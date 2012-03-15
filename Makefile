@@ -140,6 +140,7 @@ update-offline:
 		echo 'Can not read pack $$P' >&2; \
 		exit 1; }
 	$(abspath ${ELITO_DIR}/scripts/apply-update-pack) '$(abspath $P)'
+	$(MAKE) .stamps/autoconf-update
 
 create-tag:
 	+T=$$(mktemp -t create-tag.XXXXXX) && \
@@ -152,7 +153,7 @@ create-tag-now:	create-tag
 endif
 
 .reconfigure-%:
-	${MAKE} reconfigure M=$*
+	+! test -e "$*"/config.status || ${MAKE} reconfigure M=$*
 
 .clean-complete-%:
 	@rm -f .succeeded-$*
@@ -249,7 +250,7 @@ configure:
 	env CONFIG_SHELL=/bin/bash /bin/bash ${_topdir}/de.sigma-chemnitz/configure ${_opts} CONFIG_SHELL=/bin/bash
 
 else
-.configure-%:
+.configure-%:	.stamps/autoconf-update
 	${MAKE} configure M='$*'
 
 ifneq ($M,)
