@@ -370,6 +370,7 @@ PUSH_BRANCHES_$1 ?= $$(addprefix heads/,$${ELITO_REPO_BRANCHES_$1})
 PUSH_TAGS_$1 ?= $${ELITO_REPO_TAGS_$1}
 PUSH_PRIO_$1 ?= 00
 PUSH_REALDIR_$1 ?=	$${PUSH_DIR_$1}
+PACK_OPTS ?=
 
 push:		.push-$1
 
@@ -382,7 +383,7 @@ push:		.push-$1
 	env \
 		BRANCHES='$${PUSH_BRANCHES_$1}' \
 		TAGS='$${PUSH_TAGS_$1}' \
-	$(_generate_pack_prog) '$$T/$${PUSH_PRIO_$1}-$1' '$$(abspath $$(PUSH_DIR_$1))' '$R' '$$(PUSH_REALDIR_$1)'
+	$(_generate_pack_prog) '$$T/$${PUSH_PRIO_$1}-$1' '$$(abspath $$(PUSH_DIR_$1))' '$R' '$$(PUSH_REALDIR_$1)' ${PACK_OPTS}
 
 .generate-pack:	.generate-pack-$1
 
