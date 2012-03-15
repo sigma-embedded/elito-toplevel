@@ -132,7 +132,7 @@ update:		prepare
 	$(GIT) remote update
 	$(GIT) pull
 	$(GIT) submodule update
-	$(MAKE) $(addprefix .stamps/elito_fetch-,${ELITO_REPOS}) _MODE=fetch
+	$(MAKE_ORIG) $(addprefix .stamps/elito_fetch-,${ELITO_REPOS}) _MODE=fetch
 	$(MAKE) .stamps/autoconf-update
 
 update-offline:
@@ -140,7 +140,7 @@ update-offline:
 		echo 'Can not read pack $$P' >&2; \
 		exit 1; }
 	$(abspath ${ELITO_DIR}/scripts/apply-update-pack) '$(abspath $P)'
-	$(MAKE) .stamps/autoconf-update
+	$(MAKE_ORIG) .stamps/autoconf-update
 
 create-tag:
 	+T=$$(mktemp -t create-tag.XXXXXX) && \
@@ -153,7 +153,7 @@ create-tag-now:	create-tag
 endif
 
 .reconfigure-%:
-	+! test -e "$*"/config.status || ${MAKE} reconfigure M=$*
+	+! test -e "$*"/config.status || $(MAKE_ORIG) reconfigure M=$*
 
 .clean-complete-%:
 	@rm -f .succeeded-$*
@@ -161,29 +161,29 @@ endif
 .build-%:	.clean-complete-% .init-%
 	@touch .failed-$*
 	@! tty -s || echo -ne "\033]0;OE Build $*@$${HOSTNAME%%.*}:$${PWD/#$$HOME/~} - `date`\007"
-	+$(S) $(MAKE) .build-target-$*
+	+$(S) $(MAKE_ORIG) .build-target-$*
 	@rm -f .failed-$*
 	@date > .succeeded-$*
 
 .build-failed-%:
-	! test -e .failed-$* || $(MAKE) .build-$*
+	! test -e .failed-$* || $(MAKE_ORIG) .build-$*
 
 .build-incomplete-%:
-	test -e .succeeded-$* || $(MAKE) .build-$*
+	test -e .succeeded-$* || $(MAKE_ORIG) .build-$*
 
 .build-target-%:
-	$(MAKE) M=$* build
+	$(MAKE_ORIG) M=$* build
 
 .clean-%:	.clean-complete-%
 	rm -rf $*/tmp $*/.tmp .succeeded-$* .failed-$*
 
 .init-%:
-	$(MAKE) init M=$*
+	$(MAKE_ORIG) init M=$*
 
 .rebuild-%:
-	$(MAKE) .clean-$*
-	$(MAKE) .init-$*
-	$(MAKE) .build-$*
+	$(MAKE_ORIG) .clean-$*
+	$(MAKE_ORIG) .init-$*
+	$(MAKE_ORIG) .build-$*
 
 .repo-info-%:
 	@printf '%s (%s):\n' "$*" "$(PUSH_DIR_$*)"
@@ -201,14 +201,14 @@ endif
 
 .stamps/autoconf-update:	$(ELITO_DIR)/configure.ac
 	rm -f .stamps/autoconf
-	$(MAKE) prepare
-	$(MAKE) $(addprefix .reconfigure-,${PROJECTS})
+	$(MAKE_ORIG) prepare
+	$(MAKE_ORIG) $(addprefix .reconfigure-,${PROJECTS})
 	@mkdir -p $(@D)
 	@touch $@
 
 .stamps/git-submodule:	Makefile
 	$(GIT) submodule init
-	$(if ${_fetch_targets},$(MAKE) ${_fetch_targets} _MODE=fetch)
+	$(if ${_fetch_targets},$(MAKE_ORIG) ${_fetch_targets} _MODE=fetch)
 	$(GIT) submodule update
 	@mkdir -p $(@D)
 	@touch $@
@@ -251,11 +251,11 @@ configure:
 
 else
 .configure-%:	.stamps/autoconf-update
-	${MAKE} configure M='$*'
+	$(MAKE_ORIG) configure M='$*'
 
 ifneq ($M,)
 configure:
-	${MAKE} -C '$M' -f $(abspath Makefile) configure _MODE=configure _topdir=$(abspath .)
+	$(MAKE_ORIG) -C '$M' configure _MODE=configure _topdir=$(abspath .)
 endif
 
 endif
@@ -394,7 +394,7 @@ endef
 generate-pack:
 	T=$$(mktemp -d -t update-pack.XXXXXX) && \
 	trap "rm -rf $$T" EXIT && \
-	$(MAKE) T="$$T" _packname=$(if $P,$P,update-pack-`date +%Y%m%dT%H%M%S`.tar) .$@
+	$(MAKE_ORIG) T="$$T" _packname=$(if $P,$P,update-pack-`date +%Y%m%dT%H%M%S`.tar) .$@
 
 
 $(foreach r,$(PUSH_REPOS),$(eval $(call _build_repo_push,$r)))
@@ -402,6 +402,6 @@ $(foreach r,$(PUSH_REPOS),$(eval $(call _build_repo_push,$r)))
 else
 
 generate-pack push:
-	$(MAKE)	$@ _MODE=push
+	$(MAKE_ORIG)	$@ _MODE=push
 
 endif				# _MODE == push
