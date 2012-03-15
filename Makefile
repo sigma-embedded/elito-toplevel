@@ -9,6 +9,8 @@ GIT_TAG_FLAGS = -a
 GIT_TAG_NOW_FMT = %Y%d%mT%H%M%S
 GIT_TAG_PREFIX ?=
 
+PACK_OPTS =
+
 UPSTREAM_REPOS = org.openembedded.core org.openembedded.meta kernel
 
 UPSTREAM_DIR_org.openembedded.core = org.openembedded.core
@@ -370,7 +372,7 @@ PUSH_BRANCHES_$1 ?= $$(addprefix heads/,$${ELITO_REPO_BRANCHES_$1})
 PUSH_TAGS_$1 ?= $${ELITO_REPO_TAGS_$1}
 PUSH_PRIO_$1 ?= 00
 PUSH_REALDIR_$1 ?=	$${PUSH_DIR_$1}
-PACK_OPTS ?=
+PACK_OPTS_$1 ?= ${PACK_OPTS}
 
 push:		.push-$1
 
@@ -380,10 +382,12 @@ push:		.push-$1
 	cd $$(PUSH_DIR_$1) && $$(GIT) push $$* $$(PO)
 
 .generate-pack-$1:
+	@echo "Packaging repo $1"
 	env \
 		BRANCHES='$${PUSH_BRANCHES_$1}' \
 		TAGS='$${PUSH_TAGS_$1}' \
-	$(_generate_pack_prog) '$$T/$${PUSH_PRIO_$1}-$1' '$$(abspath $$(PUSH_DIR_$1))' '$R' '$$(PUSH_REALDIR_$1)' ${PACK_OPTS}
+	$(_generate_pack_prog) '$$T/$${PUSH_PRIO_$1}-$1' '$$(abspath $$(PUSH_DIR_$1))' '$R' '$$(PUSH_REALDIR_$1)' $$(PACK_OPTS_$1)
+	@echo "======================================="
 
 .generate-pack:	.generate-pack-$1
 
