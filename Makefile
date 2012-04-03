@@ -96,7 +96,7 @@ image:	build
 
 ifneq ($M,)
 reconfigure:
-	cd $M && ./config.status --recheck
+	cd $M && cd "`pwd -P`" && ./config.status --recheck
 
 init:
 	$(MAKE) -C $M
@@ -249,7 +249,7 @@ _opts = \
 	${CONFIGURE_OPTIONS}
 
 configure:
-	env CONFIG_SHELL=/bin/bash /bin/bash ${_topdir}/de.sigma-chemnitz/configure ${_opts} CONFIG_SHELL=/bin/bash
+	cd "`pwd -P`" && env CONFIG_SHELL=/bin/bash /bin/bash ${_topdir}/de.sigma-chemnitz/configure ${_opts} CONFIG_SHELL=/bin/bash
 
 else
 .configure-%:	.stamps/autoconf-update
