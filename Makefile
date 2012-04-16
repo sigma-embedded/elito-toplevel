@@ -1,6 +1,7 @@
 SHELL = /bin/bash
 GIT = git
 TAR = tar
+PWD_P = pwd -P
 AUTORECONF    = autoreconf
 ELITO_DIR     = de.sigma-chemnitz
 GITREPO_BASE  = elito
@@ -96,7 +97,7 @@ image:	build
 
 ifneq ($M,)
 reconfigure:
-	cd $M && cd "`pwd -P`" && ./config.status --recheck
+	cd $M && cd "`$(PWD_P)`" && ./config.status --recheck
 
 init:
 	$(MAKE) -C $M
@@ -249,7 +250,7 @@ _opts = \
 	${CONFIGURE_OPTIONS}
 
 configure:
-	cd "`pwd -P`" && env CONFIG_SHELL=/bin/bash /bin/bash ${_topdir}/de.sigma-chemnitz/configure ${_opts} CONFIG_SHELL=/bin/bash
+	cd "`$(PWD_P)`" && env CONFIG_SHELL=/bin/bash /bin/bash ${_topdir}/de.sigma-chemnitz/configure ${_opts} CONFIG_SHELL=/bin/bash PWD_P='$(PWD_P)'
 
 else
 .configure-%:	.stamps/autoconf-update
