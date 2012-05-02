@@ -7,7 +7,7 @@ ELITO_DIR     = de.sigma-chemnitz
 GITREPO_BASE  = elito
 
 GIT_TAG_FLAGS = -a
-GIT_TAG_NOW_FMT = %Y%d%mT%H%M%S
+GIT_TAG_NOW_FMT = %Y%m%dT%H%M%S
 GIT_TAG_PREFIX ?=
 
 PACK_OPTS =
