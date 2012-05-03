@@ -11,6 +11,7 @@ GIT_TAG_NOW_FMT = %Y%m%dT%H%M%S
 GIT_TAG_PREFIX ?=
 
 PACK_OPTS =
+PACK_API = 1
 
 UPSTREAM_REPOS = org.openembedded.core org.openembedded.meta kernel
 
@@ -395,6 +396,7 @@ push:		.push-$1
 endef
 
 .generate-pack:
+	@echo ${PACK_API} > api
 	$(TAR) cf ${_packname} -C $T --owner root --group root --mode go-w,a+rX .
 
 generate-pack:
