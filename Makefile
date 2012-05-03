@@ -396,7 +396,7 @@ push:		.push-$1
 endef
 
 .generate-pack:
-	@echo ${PACK_API} > api
+	@echo ${PACK_API} > $T/api
 	$(TAR) cf ${_packname} -C $T --owner root --group root --mode go-w,a+rX .
 
 generate-pack:
