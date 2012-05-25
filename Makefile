@@ -122,6 +122,7 @@ reconfigure-all:	$(addprefix .reconfigure-,$(PROJECTS))
 build-all:		$(addprefix .clean-complete-,$(PROJECTS)) \
 			$(addprefix .build-,$(PROJECTS))
 clean-all:		$(addprefix .clean-,$(PROJECTS))
+mrproper-all:		$(addprefix .mrproper-,$(PROJECTS))
 init-all:		$(addprefix .init-,$(PROJECTS))
 rebuild-all:		$(addprefix .rebuild-,$(PROJECTS))
 build-failed:		$(addprefix .build-failed-,$(PROJECTS))
@@ -179,6 +180,10 @@ endif
 	$(MAKE_ORIG) M=$* build
 
 .clean-%:	.clean-complete-%
+	rm -rf $*/tmp $*/.tmp .succeeded-$* .failed-$*
+
+.mrproper-%:	.clean-complete-%
+	+-test -e $*/Makefile && $(MAKE) -C '$*' mrproper
 	rm -rf $*/tmp $*/.tmp .succeeded-$* .failed-$*
 
 .init-%:
