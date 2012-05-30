@@ -9,6 +9,7 @@ GITREPO_BASE  = elito
 GIT_TAG_FLAGS = -a
 GIT_TAG_NOW_FMT = %Y%m%dT%H%M%S
 GIT_TAG_PREFIX ?=
+GIT_SUBMODULE_STRATEGY = --merge
 
 PACK_OPTS =
 PACK_API = 1
@@ -136,7 +137,7 @@ prepare:	.stamps/git-submodule .stamps/autoconf
 update:		prepare
 	$(GIT) remote update
 	$(GIT) pull
-	$(GIT) submodule update
+	$(GIT) submodule update $(GIT_SUBMODULE_STRATEGY)
 	$(MAKE_ORIG) $(addprefix .stamps/elito_fetch-,${ELITO_REPOS}) _MODE=fetch
 	$(MAKE) .stamps/autoconf-update
 
