@@ -1,8 +1,18 @@
+SHELL = /bin/bash
 GIT = git
 TAR = tar
+PWD_P = pwd -P
 AUTORECONF    = autoreconf
 ELITO_DIR     = de.sigma-chemnitz
 GITREPO_BASE  = elito
+
+GIT_TAG_FLAGS = -a
+GIT_TAG_NOW_FMT = %Y%m%dT%H%M%S
+GIT_TAG_PREFIX ?=
+GIT_SUBMODULE_STRATEGY = --merge
+
+PACK_OPTS =
+PACK_API = 1
 
 UPSTREAM_REPOS = org.openembedded.core org.openembedded.meta kernel
 
@@ -17,6 +27,8 @@ UPSTREAM_BRANCH_org.openembedded = master
 UPSTREAM_DIR_kernel = workspace/kernel.git
 UPSTREAM_GIT_kernel = git://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux-2.6
 UPSTREAM_BRANCH_kernel = master
+
+MAKE_ORIG = $(MAKE) -f $(abspath $(firstword $(MAKEFILE_LIST)))
 
 ifeq (${HOSTNAME},)
 HOSTNAME := $(shell hostname -f)
@@ -77,14 +89,17 @@ Usage:  make <op> [M=<module>]\n\
 _submodules = $(shell $(GIT) submodule status --cached | awk '{ print $$2 }')
 
 commit-submodules:
-	{ echo "updated submodules"; echo; echo; git submodule summary; } \
-	| $(GIT) commit -F - ${_submodules}
+	{ echo "updated submodules"; echo; \
+        git submodule summary | nl -b a -n rz -w 8 -s '' | \
+        sort -k 1.13 | uniq -u -s 13 | sort | \
+        sed -e 's/^........//' -e '2,$${/^\*/i\\' -e '' -e '}'; \
+        } | $(GIT) commit -F - ${_submodules}
 
 image:	build
 
 ifneq ($M,)
 reconfigure:
-	cd $M && ./config.status --recheck
+	cd $M && cd "`$(PWD_P)`" && ./config.status --recheck
 
 init:
 	$(MAKE) -C $M
@@ -108,18 +123,22 @@ reconfigure-all:	$(addprefix .reconfigure-,$(PROJECTS))
 build-all:		$(addprefix .clean-complete-,$(PROJECTS)) \
 			$(addprefix .build-,$(PROJECTS))
 clean-all:		$(addprefix .clean-,$(PROJECTS))
+mrproper-all:		$(addprefix .mrproper-,$(PROJECTS))
 init-all:		$(addprefix .init-,$(PROJECTS))
 rebuild-all:		$(addprefix .rebuild-,$(PROJECTS))
 build-failed:		$(addprefix .build-failed-,$(PROJECTS))
 build-incomplete:	$(addprefix .build-incomplete-,$(PROJECTS))
+repo-info:		$(addprefix .repo-info-,$(PUSH_REPOS))
+
+.NOTPARALLEL:		$(addprefix .repo-info-,$(PUSH_REPOS))
 
 prepare:	.stamps/git-submodule .stamps/autoconf
 
 update:		prepare
 	$(GIT) remote update
 	$(GIT) pull
-	$(GIT) submodule update
-	$(MAKE) $(addprefix .stamps/elito_fetch-,${ELITO_REPOS}) _MODE=fetch
+	$(GIT) submodule update $(GIT_SUBMODULE_STRATEGY)
+	$(MAKE_ORIG) $(addprefix .stamps/elito_fetch-,${ELITO_REPOS}) _MODE=fetch
 	$(MAKE) .stamps/autoconf-update
 
 update-offline:
@@ -127,9 +146,20 @@ update-offline:
 		echo 'Can not read pack $$P' >&2; \
 		exit 1; }
 	$(abspath ${ELITO_DIR}/scripts/apply-update-pack) '$(abspath $P)'
+	$(MAKE_ORIG) .stamps/autoconf-update
+
+create-tag:
+	+T=$$(mktemp -t create-tag.XXXXXX) && \
+	trap "rm -rf $$T" EXIT && \
+	$(MAKE_ORIG) .create-tag T=$$T TAG='$(TAG)'
+
+ifneq ($(GIT_TAG_PREFIX),)
+create-tag-now:	TAG := $(GIT_TAG_PREFIX)-$(shell date +$(GIT_TAG_NOW_FMT))
+create-tag-now:	create-tag
+endif
 
 .reconfigure-%:
-	${MAKE} reconfigure M=$*
+	+! test -e "$*"/config.status || $(MAKE_ORIG) reconfigure M=$*
 
 .clean-complete-%:
 	@rm -f .succeeded-$*
@@ -137,40 +167,58 @@ update-offline:
 .build-%:	.clean-complete-% .init-%
 	@touch .failed-$*
 	@! tty -s || echo -ne "\033]0;OE Build $*@$${HOSTNAME%%.*}:$${PWD/#$$HOME/~} - `date`\007"
-	+$(S) $(MAKE) .build-target-$*
+	+$(S) $(MAKE_ORIG) .build-target-$*
 	@rm -f .failed-$*
 	@date > .succeeded-$*
 
 .build-failed-%:
-	! test -e .failed-$* || $(MAKE) .build-$*
+	! test -e .failed-$* || $(MAKE_ORIG) .build-$*
 
 .build-incomplete-%:
-	test -e .succeeded-$* || $(MAKE) .build-$*
+	test -e .succeeded-$* || $(MAKE_ORIG) .build-$*
 
 .build-target-%:
-	$(MAKE) M=$* build
+	$(MAKE_ORIG) M=$* build
 
 .clean-%:	.clean-complete-%
 	rm -rf $*/tmp $*/.tmp .succeeded-$* .failed-$*
 
+.mrproper-%:	.clean-complete-%
+	+-test -e $*/Makefile && $(MAKE) -C '$*' mrproper
+	rm -rf $*/tmp $*/.tmp .succeeded-$* .failed-$*
+
 .init-%:
-	$(MAKE) init M=$*
+	$(MAKE_ORIG) init M=$*
 
 .rebuild-%:
-	$(MAKE) .clean-$*
-	$(MAKE) .init-$*
-	$(MAKE) .build-$*
+	$(MAKE_ORIG) .clean-$*
+	$(MAKE_ORIG) .init-$*
+	$(MAKE_ORIG) .build-$*
+
+.repo-info-%:
+	@printf '%s (%s):\n' "$*" "$(PUSH_DIR_$*)"
+	@b='${PUSH_BRANCHES_$*}'; : $${b:=HEAD}; \
+	$(GIT) ls-remote "${PUSH_DIR_$*}" $$b | sed -e 's!^!\t!'
+
+.create-tag:	FORCE | .create-tag-check
+	$(MAKE_ORIG) -s --no-print-directory repo-info >$T
+	$(GIT) tag $(GIT_TAG_FLAGS) -F $T $(TAG)
+
+.create-tag-check:	FORCE
+	@test -n "$(TAG)" || { echo "TAG undefined" >&2; false; }
+	@! $(GIT) ls-remote --exit-code . refs/tags/$(TAG) || \
+		{ echo "tag '$(TAG)' already defined" >&2; false; }
 
 .stamps/autoconf-update:	$(ELITO_DIR)/configure.ac
 	rm -f .stamps/autoconf
-	$(MAKE) prepare
-	$(MAKE) $(addprefix .reconfigure-,${PROJECTS})
+	$(MAKE_ORIG) prepare
+	$(MAKE_ORIG) $(addprefix .reconfigure-,${PROJECTS})
 	@mkdir -p $(@D)
 	@touch $@
 
 .stamps/git-submodule:	Makefile
 	$(GIT) submodule init
-	$(if ${_fetch_targets},$(MAKE) ${_fetch_targets} _MODE=fetch)
+	$(if ${_fetch_targets},$(MAKE_ORIG) ${_fetch_targets} _MODE=fetch)
 	$(GIT) submodule update
 	@mkdir -p $(@D)
 	@touch $@
@@ -182,8 +230,11 @@ update-offline:
 
 endif
 
+FORCE:
+
 .PHONY:	image build clean mrproper init prepare update update-offline
 .PHONY:	commit-submodules init reconfigure
+.PHONY:	FORCE
 
 ########################################################################################
 
@@ -206,15 +257,15 @@ _opts = \
 	${CONFIGURE_OPTIONS}
 
 configure:
-	env CONFIG_SHELL=/bin/bash /bin/bash ${_topdir}/de.sigma-chemnitz/configure ${_opts} CONFIG_SHELL=/bin/bash
+	cd "`$(PWD_P)`" && env CONFIG_SHELL=/bin/bash /bin/bash ${_topdir}/de.sigma-chemnitz/configure ${_opts} CONFIG_SHELL=/bin/bash PWD_P='$(PWD_P)'
 
 else
-.configure-%:
-	${MAKE} configure M='$*'
+.configure-%:	.stamps/autoconf-update
+	$(MAKE_ORIG) configure M='$*'
 
 ifneq ($M,)
 configure:
-	${MAKE} -C '$M' -f $(abspath Makefile) configure _MODE=configure _topdir=$(abspath .)
+	$(MAKE_ORIG) -C '$M' configure _MODE=configure _topdir=$(abspath .)
 endif
 
 endif
@@ -329,6 +380,7 @@ PUSH_BRANCHES_$1 ?= $$(addprefix heads/,$${ELITO_REPO_BRANCHES_$1})
 PUSH_TAGS_$1 ?= $${ELITO_REPO_TAGS_$1}
 PUSH_PRIO_$1 ?= 00
 PUSH_REALDIR_$1 ?=	$${PUSH_DIR_$1}
+PACK_OPTS_$1 ?= ${PACK_OPTS}
 
 push:		.push-$1
 
@@ -338,22 +390,25 @@ push:		.push-$1
 	cd $$(PUSH_DIR_$1) && $$(GIT) push $$* $$(PO)
 
 .generate-pack-$1:
-	env \
-		BRANCHES='$${PUSH_BRANCHES_$1}' \
+	@echo "Packaging repo $1"
+	b='$${PUSH_BRANCHES_$1}'; env \
+		BRANCHES="$$$${b:-HEAD}" \
 		TAGS='$${PUSH_TAGS_$1}' \
-	$(_generate_pack_prog) '$$T/$${PUSH_PRIO_$1}-$1' '$$(abspath $$(PUSH_DIR_$1))' '$R' '$$(PUSH_REALDIR_$1)'
+	$(_generate_pack_prog) '$$T/$${PUSH_PRIO_$1}-$1' '$$(abspath $$(PUSH_DIR_$1))' '$R' '$$(PUSH_REALDIR_$1)' $$(PACK_OPTS_$1)
+	@echo "======================================="
 
 .generate-pack:	.generate-pack-$1
 
 endef
 
 .generate-pack:
+	@echo ${PACK_API} > $T/api
 	$(TAR) cf ${_packname} -C $T --owner root --group root --mode go-w,a+rX .
 
 generate-pack:
 	T=$$(mktemp -d -t update-pack.XXXXXX) && \
 	trap "rm -rf $$T" EXIT && \
-	$(MAKE) T="$$T" _packname=$(if $P,$P,update-pack-`date +%Y%m%dT%H%M%S`.tar) .$@
+	$(MAKE_ORIG) T="$$T" _packname=$(if $P,$P,update-pack-`date +%Y%m%dT%H%M%S`.tar) .$@
 
 
 $(foreach r,$(PUSH_REPOS),$(eval $(call _build_repo_push,$r)))
@@ -361,6 +416,6 @@ $(foreach r,$(PUSH_REPOS),$(eval $(call _build_repo_push,$r)))
 else
 
 generate-pack push:
-	$(MAKE)	$@ _MODE=push
+	$(MAKE_ORIG)	$@ _MODE=push
 
 endif				# _MODE == push
