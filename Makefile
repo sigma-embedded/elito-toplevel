@@ -289,7 +289,7 @@ endef
 
 define _git_init
 	mkdir -p $2
-	-cd "$2" && $6 $$(GIT) init -q
+	-cd "$2" && { test -d .git/objects || $6 $$(GIT) init -q; }
 	$$(foreach a,$3,$$(call _register_alternate,$$a,$2))
 	-cd "$2" && $$(GIT) remote add $4 '$5'
 
