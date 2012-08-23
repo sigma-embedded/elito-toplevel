@@ -419,3 +419,36 @@ generate-pack push:
 	$(MAKE_ORIG)	$@ _MODE=push
 
 endif				# _MODE == push
+
+###############################################################################
+
+ifeq (${_MODE},create-tag)
+
+ifeq (${TAG},)
+$(error TAG not defined)
+endif
+
+ifeq (${TAG_OPTS},)
+$(error TAG_OPTS not defined)
+endif
+
+define _build_repo_create_tag
+
+create-tag-recursive:	.create-tag-repo-$1
+
+.create-tag-repo-$1:
+	cd $$(PUSH_DIR_$1) && $$(GIT) tag $(GIT_TAG_FLAGS) $(TAG_OPTS) $(TAG)
+
+endef
+
+create-tag-recursive:	.create-tag-repo-top
+.create-tag-repo-top:	create-tag
+
+$(foreach r,$(filter-out top,$(PUSH_REPOS)),$(eval $(call _build_repo_create_tag,$r)))
+
+else ifeq(${_MODE},):				# create-tag
+
+create-tag-recursive:
+	$(MAKE_ORIG) $@ _MODE=create-tag
+
+endif				# create-tag
