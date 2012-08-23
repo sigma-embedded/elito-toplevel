@@ -351,6 +351,8 @@ _submodule_$1_uri := $$(shell $$(GIT) config "submodule.$1.url")
 
 .stamps/submodule_init-$1:
 	-cd $1 && $$(GIT) remote add origin $$(_submodule_$1_uri)
+	cd $1 && $$(GIT) config --unset-all remote.orgin.fetch 'refs/tags/\*:refs/tags/\*' || :
+	cd $1 && $$(GIT) config --add remote.origin.fetch 'refs/tags/*:refs/tags/*'
 
 .stamps/submodule_fetch-$1:		.stamps/submodule_init-$1
 	-cd $1 && $$(GIT) fetch origin --no-tags
