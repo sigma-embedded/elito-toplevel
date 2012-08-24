@@ -306,7 +306,7 @@ endef
 ##### _build_upstream_fetch(repo) #######
 define _build_upstream_fetch
 .stamps/upstream_init-$1:
-	$(call _git_init,$1,$${UPSTREAM_DIR_$1},$${UPSTREAM_ALTERNATES_$1},upstream,$${UPSTREAM_GIT_$1},$${_git_init_prefix})
+	$(call _git_init,$1,$${UPSTREAM_DIR_$1},$${ELITO_GLOBAL_ALTERNATES} $${UPSTREAM_ALTERNATES_$1},upstream,$${UPSTREAM_GIT_$1},$${_git_init_prefix})
 
 .stamps/upstream_fetch-$1:	.stamps/upstream_init-$1
 	-cd $${UPSTREAM_DIR_$1} && $$(GIT) fetch upstream --no-tags +$${UPSTREAM_BRANCH_$1}:refs/remotes/upstream/$${UPSTREAM_BRANCH_$1}
