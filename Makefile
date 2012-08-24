@@ -279,7 +279,7 @@ _submodules := ${_submodules}
 
 define _register_alternate
 	test -d $2/.git/objects && g=$2/.git || g=$2; \
-	echo $1 > $$g/objects/info/alternates
+	echo '$(abspath $1)' >> $$g/objects/info/alternates
 endef
 
 define _git_create_branch
