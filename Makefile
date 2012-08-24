@@ -315,12 +315,6 @@ define _build_upstream_fetch
 	-cd $${UPSTREAM_DIR_$1} && $$(GIT) fetch upstream --no-tags +$${UPSTREAM_BRANCH_$1}:refs/remotes/upstream/$${UPSTREAM_BRANCH_$1}
 	$(call _git_fetch,$1,$${UPSTREAM_DIR_$1},upstream,)
 
-.stamps/upstream_setup-$1:	.stamps/upstream_fetch-$1
-	@mkdir -p $$(@D)
-	@touch $$@
-
-.stamps/submodule_init-$1:	.stamps/upstream_fetch-$1
-
 endef					# _build_upstream_fetch
 
 
@@ -344,31 +338,8 @@ define _build_elito_fetch
 
 endef					# _build_elito_fetch
 
-
-##### _build_submodule_fetch(submodule) #######
-define _build_submodule_fetch
-_submodule_$1_uri := $$(shell $$(GIT) config "submodule.$1.url")
-
-.stamps/upstream_setup-$1:	.stamps/submodule_update-$1
-.stamps/submodule_update-$1:	.stamps/submodule_fetch-$1
-
-.stamps/submodule_init-$1:
-	-cd $1 && $$(GIT) remote add origin $$(_submodule_$1_uri)
-	cd $1 && $$(GIT) config --unset-all remote.orgin.fetch 'refs/tags/\*:refs/tags/\*' || :
-	cd $1 && $$(GIT) config --add remote.origin.fetch 'refs/tags/*:refs/tags/*'
-
-.stamps/submodule_fetch-$1:		.stamps/submodule_init-$1
-	-cd $1 && $$(GIT) fetch origin --no-tags
-	-cd $1 && { test -n "`$$(GIT) ls-remote . HEAD | grep -v /HEAD`" || $$(GIT) checkout -b master -q FETCH_HEAD; }
-
-.stamps/submodule_update-$1:
-	$$(GIT) submodule update $(GIT_SUBMODULE_STRATEGY) $1
-endef					# _build_submodule_fetch
-
-
 $(foreach r,$(UPSTREAM_REPOS),$(eval $(call _build_upstream_fetch,$r)))
 $(foreach r,$(ELITO_REPOS),$(eval $(call _build_elito_fetch,$r)))
-$(foreach s,$(_submodules),$(eval $(call _build_submodule_fetch,$s)))
 
 endif					# _MODE == fetch
 
