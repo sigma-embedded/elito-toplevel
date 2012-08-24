@@ -220,6 +220,9 @@ endif
 	$(GIT) submodule init
 	$(if ${_fetch_targets},$(MAKE_ORIG) ${_fetch_targets} _MODE=fetch)
 	$(GIT) submodule update
+	-$(GIT) submodule foreach "$(GIT) config --unset-all remote.orgin.fetch 'refs/tags/\*:refs/tags/\*' || :"
+	-$(GIT) submodule foreach "$(GIT) config --add remote.origin.fetch 'refs/tags/*:refs/tags/*' || :"
+	-$(GIT) submodule foreach '$(GIT) push . HEAD:master && $(GIT) checkout master || :'
 	@mkdir -p $(@D)
 	@touch $@
 
