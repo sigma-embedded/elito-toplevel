@@ -278,7 +278,7 @@ ifeq (${_MODE},fetch)
 _submodules := ${_submodules}
 
 define _register_alternate
-	test -d $2/.git/object && g=$2/.git || g=$2; \
+	test -d $2/.git/objects && g=$2/.git || g=$2; \
 	echo $1 > $$g/objects/info/alternates
 endef
 
