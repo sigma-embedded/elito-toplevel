@@ -448,7 +448,7 @@ create-tag-recursive:	.create-tag-repo-top
 
 $(foreach r,$(filter-out top,$(PUSH_REPOS)),$(eval $(call _build_repo_create_tag,$r)))
 
-else ifeq(${_MODE},)				# create-tag
+else ifeq (${_MODE},)				# create-tag
 
 create-tag-recursive:
 	$(MAKE_ORIG) $@ _MODE=create-tag
