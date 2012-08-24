@@ -359,10 +359,10 @@ _submodule_$1_uri := $$(shell $$(GIT) config "submodule.$1.url")
 
 .stamps/submodule_fetch-$1:		.stamps/submodule_init-$1
 	-cd $1 && $$(GIT) fetch origin --no-tags
-	-cd $1 && { test -n "`$$(GIT) ls-remote . HEAD`" || $$(GIT) checkout -q FETCH_HEAD; }
+	-cd $1 && { test -n "`$$(GIT) ls-remote . HEAD | grep -v /HEAD`" || $$(GIT) checkout -b master -q FETCH_HEAD; }
 
 .stamps/submodule_update-$1:
-	$$(GIT) submodule update $1
+	$$(GIT) submodule update $(GIT_SUBMODULE_STRATEGY) $1
 endef					# _build_submodule_fetch
 
 
