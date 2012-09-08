@@ -50,6 +50,7 @@ ifeq (${_MODE},configure)
 -include ./build-setup
 -include ./build-setup_${DOMAIN}
 -include ./build-setup_${HOSTNAME}
+include ${LOCAL_BUILD_SETUP}
 endif
 export ELITO_CRT
 
