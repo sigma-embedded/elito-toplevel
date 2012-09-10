@@ -198,6 +198,8 @@ endif
 	$(MAKE_ORIG) .build-$*
 
 CHANGELOG_DIR ?= $(_topdir)
+
+.SECONDARY:	$(addprefix $(abspath $(CHANGELOG_DIR))/CHANGES.,$(PUSH_REPOS))
 .create-changelog-%:	$(abspath $(CHANGELOG_DIR))/CHANGES.%
 	@:
 
