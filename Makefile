@@ -130,6 +130,7 @@ rebuild-all:		$(addprefix .rebuild-,$(PROJECTS))
 build-failed:		$(addprefix .build-failed-,$(PROJECTS))
 build-incomplete:	$(addprefix .build-incomplete-,$(PROJECTS))
 repo-info:		$(addprefix .repo-info-,$(PUSH_REPOS))
+create-changelog:	$(addprefix .create-changelog-,$(PUSH_REPOS))
 
 .NOTPARALLEL:		$(addprefix .repo-info-,$(PUSH_REPOS))
 
@@ -195,6 +196,17 @@ endif
 	$(MAKE_ORIG) .clean-$*
 	$(MAKE_ORIG) .init-$*
 	$(MAKE_ORIG) .build-$*
+
+CHANGELOG_DIR ?= $(_topdir)
+.create-changelog-%:	$(abspath $(CHANGELOG_DIR))/CHANGES.%
+	@:
+
+$(abspath $(CHANGELOG_DIR))/CHANGES.%:	FORCE
+ifeq ($(REV),)
+	@echo "**** error: REV not set" >&2; exit 1
+endif
+	cd "$(PUSH_DIR_$*)" && $(GIT) whatchanged -M -C $O $(REV) > $@
+	test -s $@ || rm -f $@
 
 .repo-info-%:
 	@printf '%s (%s):\n' "$*" "$(PUSH_DIR_$*)"
