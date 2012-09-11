@@ -50,6 +50,7 @@ ifeq (${_MODE},configure)
 -include ./build-setup
 -include ./build-setup_${DOMAIN}
 -include ./build-setup_${HOSTNAME}
+include ${LOCAL_BUILD_SETUP}
 endif
 export ELITO_CRT
 
@@ -90,7 +91,7 @@ _submodules = $(shell $(GIT) submodule status --cached | awk '{ print $$2 }')
 
 commit-submodules:
 	{ echo "updated submodules"; echo; \
-        git submodule summary | nl -b a -n rz -w 8 -s '' | \
+        $(GIT) submodule summary | nl -b a -n rz -w 8 -s '' | \
         sort -k 1.13 | uniq -u -s 13 | sort | \
         sed -e 's/^........//' -e '2,$${/^\*/i\\' -e '' -e '}'; \
         } | $(GIT) commit -F - ${_submodules}
@@ -129,6 +130,7 @@ rebuild-all:		$(addprefix .rebuild-,$(PROJECTS))
 build-failed:		$(addprefix .build-failed-,$(PROJECTS))
 build-incomplete:	$(addprefix .build-incomplete-,$(PROJECTS))
 repo-info:		$(addprefix .repo-info-,$(PUSH_REPOS))
+create-changelog:	$(addprefix .create-changelog-,$(PUSH_REPOS))
 
 .NOTPARALLEL:		$(addprefix .repo-info-,$(PUSH_REPOS))
 
@@ -195,6 +197,19 @@ endif
 	$(MAKE_ORIG) .init-$*
 	$(MAKE_ORIG) .build-$*
 
+CHANGELOG_DIR ?= $(_topdir)
+
+.SECONDARY:	$(addprefix $(abspath $(CHANGELOG_DIR))/CHANGES.,$(PUSH_REPOS))
+.create-changelog-%:	$(abspath $(CHANGELOG_DIR))/CHANGES.%
+	@:
+
+$(abspath $(CHANGELOG_DIR))/CHANGES.%:	FORCE
+ifeq ($(REV),)
+	@echo "**** error: REV not set" >&2; exit 1
+endif
+	cd "$(PUSH_DIR_$*)" && $(GIT) whatchanged -M -C $O $(REV) > $@
+	test -s $@ || rm -f $@
+
 .repo-info-%:
 	@printf '%s (%s):\n' "$*" "$(PUSH_DIR_$*)"
 	@b='${PUSH_BRANCHES_$*}'; : $${b:=HEAD}; \
@@ -220,6 +235,9 @@ endif
 	$(GIT) submodule init
 	$(if ${_fetch_targets},$(MAKE_ORIG) ${_fetch_targets} _MODE=fetch)
 	$(GIT) submodule update
+	-$(GIT) submodule foreach "$(GIT) config --unset-all remote.orgin.fetch 'refs/tags/\*:refs/tags/\*' || :"
+	-$(GIT) submodule foreach "$(GIT) config --add remote.origin.fetch 'refs/tags/*:refs/tags/*' || :"
+	-$(GIT) submodule foreach '$(GIT) push . HEAD:master && $(GIT) checkout master || :'
 	@mkdir -p $(@D)
 	@touch $@
 
@@ -278,8 +296,8 @@ ifeq (${_MODE},fetch)
 _submodules := ${_submodules}
 
 define _register_alternate
-	test -d $2/.git/object && g=$2/.git || g=$2; \
-	echo $1 > $$g/objects/info/alternates
+	test -d $2/.git/objects && g=$2/.git || g=$2; \
+	echo '$(abspath $1)' >> $$g/objects/info/alternates
 endef
 
 define _git_create_branch
@@ -306,17 +324,11 @@ endef
 ##### _build_upstream_fetch(repo) #######
 define _build_upstream_fetch
 .stamps/upstream_init-$1:
-	$(call _git_init,$1,$${UPSTREAM_DIR_$1},$${UPSTREAM_ALTERNATES_$1},upstream,$${UPSTREAM_GIT_$1},$${_git_init_prefix})
+	$(call _git_init,$1,$${UPSTREAM_DIR_$1},$${ELITO_GLOBAL_ALTERNATES} $${UPSTREAM_ALTERNATES_$1},upstream,$${UPSTREAM_GIT_$1},$${_git_init_prefix})
 
 .stamps/upstream_fetch-$1:	.stamps/upstream_init-$1
 	-cd $${UPSTREAM_DIR_$1} && $$(GIT) fetch upstream --no-tags +$${UPSTREAM_BRANCH_$1}:refs/remotes/upstream/$${UPSTREAM_BRANCH_$1}
 	$(call _git_fetch,$1,$${UPSTREAM_DIR_$1},upstream,)
-
-.stamps/upstream_setup-$1:	.stamps/upstream_fetch-$1
-	@mkdir -p $$(@D)
-	@touch $$@
-
-.stamps/submodule_init-$1:	.stamps/upstream_fetch-$1
 
 endef					# _build_upstream_fetch
 
@@ -341,29 +353,8 @@ define _build_elito_fetch
 
 endef					# _build_elito_fetch
 
-
-##### _build_submodule_fetch(submodule) #######
-define _build_submodule_fetch
-_submodule_$1_uri := $$(shell $$(GIT) config "submodule.$1.url")
-
-.stamps/upstream_setup-$1:	.stamps/submodule_update-$1
-.stamps/submodule_update-$1:	.stamps/submodule_fetch-$1
-
-.stamps/submodule_init-$1:
-	-cd $1 && $$(GIT) remote add origin $$(_submodule_$1_uri)
-
-.stamps/submodule_fetch-$1:		.stamps/submodule_init-$1
-	-cd $1 && $$(GIT) fetch origin --no-tags
-	-cd $1 && { test -n "`$$(GIT) ls-remote . HEAD`" || $$(GIT) checkout -q FETCH_HEAD; }
-
-.stamps/submodule_update-$1:
-	$$(GIT) submodule update $1
-endef					# _build_submodule_fetch
-
-
 $(foreach r,$(UPSTREAM_REPOS),$(eval $(call _build_upstream_fetch,$r)))
 $(foreach r,$(ELITO_REPOS),$(eval $(call _build_elito_fetch,$r)))
-$(foreach s,$(_submodules),$(eval $(call _build_submodule_fetch,$s)))
 
 endif					# _MODE == fetch
 
@@ -419,3 +410,36 @@ generate-pack push:
 	$(MAKE_ORIG)	$@ _MODE=push
 
 endif				# _MODE == push
+
+###############################################################################
+
+ifeq (${_MODE},create-tag)
+
+ifeq (${TAG},)
+$(error TAG not defined)
+endif
+
+ifeq (${TAG_OPTS},)
+$(error TAG_OPTS not defined)
+endif
+
+define _build_repo_create_tag
+
+create-tag-recursive:	.create-tag-repo-$1
+
+.create-tag-repo-$1:
+	cd $$(PUSH_DIR_$1) && $$(GIT) tag $(GIT_TAG_FLAGS) $(TAG_OPTS) $(TAG)
+
+endef
+
+create-tag-recursive:	.create-tag-repo-top
+.create-tag-repo-top:	create-tag
+
+$(foreach r,$(filter-out top,$(PUSH_REPOS)),$(eval $(call _build_repo_create_tag,$r)))
+
+else ifeq (${_MODE},)				# create-tag
+
+create-tag-recursive:
+	$(MAKE_ORIG) $@ _MODE=create-tag
+
+endif				# create-tag
