@@ -207,7 +207,7 @@ $(abspath $(CHANGELOG_DIR))/CHANGES.%:	FORCE
 ifeq ($(REV),)
 	@echo "**** error: REV not set" >&2; exit 1
 endif
-	cd "$(PUSH_DIR_$*)" && $(GIT) whatchanged -M -C $O $(REV) > $@
+	cd "$(PUSH_DIR_$*)" && p='$(TAG_PREFIX_$*)' s='$(TAG_SUFFIX_$*)' && $(GIT) whatchanged -M -C $O $(REV) > $@
 	test -s $@ || rm -f $@
 
 .repo-info-%:
@@ -382,7 +382,7 @@ push:		.push-$1
 
 .generate-pack-$1:
 	@echo "Packaging repo $1"
-	b='$${PUSH_BRANCHES_$1}'; env \
+	b='$${PUSH_BRANCHES_$1}' p='$(TAG_PREFIX_$*)' s='$(TAG_SUFFIX_$*)' && env \
 		BRANCHES="$$$${b:-HEAD}" \
 		TAGS='$${PUSH_TAGS_$1}' \
 	$(_generate_pack_prog) '$$T/$${PUSH_PRIO_$1}-$1' '$$(abspath $$(PUSH_DIR_$1))' '$R' '$$(PUSH_REALDIR_$1)' $$(PACK_OPTS_$1)
@@ -428,7 +428,7 @@ define _build_repo_create_tag
 create-tag-recursive:	.create-tag-repo-$1
 
 .create-tag-repo-$1:
-	cd $$(PUSH_DIR_$1) && $$(GIT) tag $(GIT_TAG_FLAGS) $(TAG_OPTS) $(TAG)
+	cd $$(PUSH_DIR_$1) && $$(GIT) tag $(GIT_TAG_FLAGS) $(TAG_OPTS) $(TAG_PREFIX_$*)$(TAG)$(TAG_SUFFIX_$*)
 
 endef
 
