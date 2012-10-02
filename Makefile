@@ -382,7 +382,7 @@ push:		.push-$1
 
 .generate-pack-$1:
 	@echo "Packaging repo $1"
-	b='$${PUSH_BRANCHES_$1}' p='$(TAG_PREFIX_$*)' s='$(TAG_SUFFIX_$*)' && env \
+	b='$${PUSH_BRANCHES_$1}' p='$(TAG_PREFIX_$1)' s='$(TAG_SUFFIX_$1)' && env \
 		BRANCHES="$$$${b:-HEAD}" \
 		TAGS='$${PUSH_TAGS_$1}' \
 	$(_generate_pack_prog) '$$T/$${PUSH_PRIO_$1}-$1' '$$(abspath $$(PUSH_DIR_$1))' '$R' '$$(PUSH_REALDIR_$1)' $$(PACK_OPTS_$1)
@@ -428,7 +428,7 @@ define _build_repo_create_tag
 create-tag-recursive:	.create-tag-repo-$1
 
 .create-tag-repo-$1:
-	cd $$(PUSH_DIR_$1) && $$(GIT) tag $(GIT_TAG_FLAGS) $(TAG_OPTS) $(TAG_PREFIX_$*)$(TAG)$(TAG_SUFFIX_$*)
+	cd $$(PUSH_DIR_$1) && $$(GIT) tag $(GIT_TAG_FLAGS) $(TAG_OPTS) $(TAG_PREFIX_$1)$(TAG)$(TAG_SUFFIX_$1)
 
 endef
 
