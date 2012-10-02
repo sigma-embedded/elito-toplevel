@@ -385,7 +385,7 @@ push:		.push-$1
 	b='$${PUSH_BRANCHES_$1}' p='$(TAG_PREFIX_$1)' s='$(TAG_SUFFIX_$1)' && env \
 		BRANCHES="$$$${b:-HEAD}" \
 		TAGS='$${PUSH_TAGS_$1}' \
-	$(_generate_pack_prog) '$$T/$${PUSH_PRIO_$1}-$1' '$$(abspath $$(PUSH_DIR_$1))' '$R' '$$(PUSH_REALDIR_$1)' $$(PACK_OPTS_$1)
+	$(_generate_pack_prog) '$$T/$${PUSH_PRIO_$1}-$1' '$$(abspath $$(PUSH_DIR_$1))' "$R" '$$(PUSH_REALDIR_$1)' $$(PACK_OPTS_$1)
 	@echo "======================================="
 
 .generate-pack:	.generate-pack-$1
