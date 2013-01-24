@@ -109,7 +109,7 @@ init:
 build:
 	make -C $M image MAKEFLAGS= MAKEOVERRIDES= $(if $(TARGETS),TARGETS='$(TARGETS)')
 
-clean mrproper:
+clean mrproper gc:
 	make -C $M $@
 
 else				# ifneq ($M,)
@@ -125,6 +125,7 @@ build-all:		$(addprefix .clean-complete-,$(PROJECTS)) \
 			$(addprefix .build-,$(PROJECTS))
 clean-all:		$(addprefix .clean-,$(PROJECTS))
 mrproper-all:		$(addprefix .mrproper-,$(PROJECTS))
+gc-all:			$(addprefix .gc-,$(PROJECTS))
 init-all:		$(addprefix .init-,$(PROJECTS))
 rebuild-all:		$(addprefix .rebuild-,$(PROJECTS))
 build-failed:		$(addprefix .build-failed-,$(PROJECTS))
@@ -189,6 +190,9 @@ endif
 	+-test -e $*/Makefile && $(MAKE) -C '$*' mrproper
 	rm -rf $*/tmp $*/.tmp .succeeded-$* .failed-$*
 
+.gc-%:
+	+-test -e $*/Makefile && $(MAKE) -C '$*' gc
+
 .init-%:
 	$(MAKE_ORIG) init M=$*
 
@@ -233,6 +237,7 @@ endif
 
 .stamps/git-submodule:	Makefile
 	$(GIT) submodule init
+	$(GIT) submodule foreach 'cd $(abspath .) && $(GIT) config --add submodule.$$name.update merge || :'
 	$(if ${_fetch_targets},$(MAKE_ORIG) ${_fetch_targets} _MODE=fetch)
 	$(GIT) submodule update
 	-$(GIT) submodule foreach "$(GIT) config --unset-all remote.orgin.fetch 'refs/tags/\*:refs/tags/\*' || :"
