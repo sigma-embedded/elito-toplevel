@@ -107,7 +107,7 @@ init:
 	$(MAKE) -C $M init
 
 build:
-	make -C $M image MAKEFLAGS= MAKEOVERRIDES= $(if $(TARGETS),TARGETS='$(TARGETS)')
+	make -C $M all-images MAKEFLAGS= MAKEOVERRIDES= $(if $(TARGETS),TARGETS='$(TARGETS)')
 
 clean mrproper gc:
 	make -C $M $@
