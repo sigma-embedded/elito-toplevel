@@ -169,7 +169,7 @@ endif
 
 .build-%:	.clean-complete-% .init-%
 	@touch .failed-$*
-	@! tty -s || echo -ne "\033]0;OE Build $*@$${HOSTNAME%%.*}:$${PWD/#$$HOME/~} - `date`\007"
+	@! tty -s || echo -ne "\033]0;OE Build $*@$${HOSTNAME%%.*}:$${PWD/#$$HOME/~} - `env LANG=C date`\007"
 	+$(S) $(MAKE_ORIG) .build-target-$*
 	@rm -f .failed-$*
 	@date > .succeeded-$*
