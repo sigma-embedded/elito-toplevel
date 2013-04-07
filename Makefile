@@ -28,6 +28,8 @@ UPSTREAM_DIR_kernel = workspace/kernel.git
 UPSTREAM_GIT_kernel = git://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux-2.6
 UPSTREAM_BRANCH_kernel = master
 
+RELEASE_BRANCH = master
+
 MAKE_ORIG = $(MAKE) -f $(abspath $(firstword $(MAKEFILE_LIST)))
 
 ifeq (${HOSTNAME},)
@@ -242,7 +244,7 @@ endif
 	$(GIT) submodule update
 	-$(GIT) submodule foreach "$(GIT) config --unset-all remote.orgin.fetch 'refs/tags/\*:refs/tags/\*' || :"
 	-$(GIT) submodule foreach "$(GIT) config --add remote.origin.fetch 'refs/tags/*:refs/tags/*' || :"
-	-$(GIT) submodule foreach '$(GIT) push . HEAD:master && $(GIT) checkout master || :'
+	-$(GIT) submodule foreach '$(GIT) push . HEAD:${RELEASE_BRANCH} && $(GIT) checkout ${RELEASE_BRANCH} || :'
 	@mkdir -p $(@D)
 	@touch $@
 
