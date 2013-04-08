@@ -239,7 +239,7 @@ endif
 
 .stamps/git-submodule:	Makefile
 	$(GIT) submodule init
-	$(GIT) submodule foreach 'cd $(abspath .) && $(GIT) config --add submodule.$$name.update merge || :'
+	$(GIT) submodule foreach 'cd $(abspath .) && $(GIT) config --replace-all submodule.$$name.update merge || :'
 	$(if ${_fetch_targets},$(MAKE_ORIG) ${_fetch_targets} _MODE=fetch)
 	$(GIT) submodule update
 	-$(GIT) submodule foreach "$(GIT) config --unset-all remote.orgin.fetch 'refs/tags/\*:refs/tags/\*' || :"
