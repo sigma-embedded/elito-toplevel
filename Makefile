@@ -11,6 +11,8 @@ GIT_TAG_NOW_FMT = %Y%m%dT%H%M%S
 GIT_TAG_PREFIX ?=
 GIT_SUBMODULE_STRATEGY = --merge
 
+BATCH_CMD ?=
+
 PACK_OPTS =
 PACK_API = 1
 
@@ -121,6 +123,9 @@ build:	build-all
 endif				# ifneq ($M,)
 
 ifeq ($M,)
+_batch_targets = rebuild-all build-all build-incomplete build_failed
+$(_batch_targets):	MAKE_ORIG := $(BATCH_CMD) $(MAKE_ORIG) BATCH_CMD=
+
 configure-all:		$(addprefix .configure-,$(PROJECTS))
 reconfigure-all:	$(addprefix .reconfigure-,$(PROJECTS))
 build-all:		$(addprefix .clean-complete-,$(PROJECTS)) \
