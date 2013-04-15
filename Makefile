@@ -11,6 +11,8 @@ GIT_TAG_NOW_FMT = %Y%m%dT%H%M%S
 GIT_TAG_PREFIX ?=
 GIT_SUBMODULE_STRATEGY = --merge
 
+BATCH_CMD ?=
+
 PACK_OPTS =
 PACK_API = 1
 
@@ -121,6 +123,9 @@ build:	build-all
 endif				# ifneq ($M,)
 
 ifeq ($M,)
+_batch_targets = rebuild-all build-all build-incomplete build_failed
+$(_batch_targets):	MAKE_ORIG := $(BATCH_CMD) $(MAKE_ORIG) BATCH_CMD=
+
 configure-all:		$(addprefix .configure-,$(PROJECTS))
 reconfigure-all:	$(addprefix .reconfigure-,$(PROJECTS))
 build-all:		$(addprefix .clean-complete-,$(PROJECTS)) \
@@ -239,7 +244,7 @@ endif
 
 .stamps/git-submodule:	Makefile
 	$(GIT) submodule init
-	$(GIT) submodule foreach 'cd $(abspath .) && $(GIT) config --add submodule.$$name.update merge || :'
+	$(GIT) submodule foreach 'cd $(abspath .) && $(GIT) config --replace-all submodule.$$name.update merge || :'
 	$(if ${_fetch_targets},$(MAKE_ORIG) ${_fetch_targets} _MODE=fetch)
 	$(GIT) submodule update
 	-$(GIT) submodule foreach "$(GIT) config --unset-all remote.orgin.fetch 'refs/tags/\*:refs/tags/\*' || :"
