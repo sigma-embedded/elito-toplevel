@@ -145,10 +145,12 @@ create-changelog:	$(addprefix .create-changelog-,$(PUSH_REPOS))
 prepare:	.stamps/git-submodule .stamps/autoconf
 
 update:		prepare
+	@touch .stamps/bad-update
 	$(GIT) remote update
 	$(GIT) pull
 	$(GIT) submodule update $(GIT_SUBMODULE_STRATEGY)
 	$(MAKE_ORIG) $(addprefix .stamps/elito_fetch-,${ELITO_REPOS}) _MODE=fetch
+	@rm -f .stamps/bad-update
 	$(MAKE) .stamps/autoconf-update
 
 update-offline:
