@@ -95,10 +95,8 @@ _submodules = $(shell $(GIT) submodule status --cached | awk '{ print $$2 }')
 
 commit-submodules:
 	{ echo "updated submodules"; echo; \
-        $(GIT) submodule summary | nl -b a -n rz -w 8 -s '' | \
-        sort -k 1.13 | uniq -u -s 13 | sort | \
-        sed -e 's/^........//' -e '2,$${/^\*/i\\' -e '' -e '}'; \
-        } | $(GIT) commit -F - ${_submodules}
+        $(GIT) submodule summary; } \
+        | $(GIT) commit -F - ${_submodules}
 
 image:	build
 
