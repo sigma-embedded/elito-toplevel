@@ -138,6 +138,9 @@ build-incomplete:	$(addprefix .build-incomplete-,$(PROJECTS))
 repo-info:		$(addprefix .repo-info-,$(PUSH_REPOS))
 create-changelog:	$(addprefix .create-changelog-,$(PUSH_REPOS))
 
+clone:
+	$(MAKE_ORIG) clone SUBMODULES='${_submodules}' _topdir='$(abspath .)' _MODE=clone
+
 .NOTPARALLEL:		$(addprefix .repo-info-,$(PUSH_REPOS))
 
 prepare:	.stamps/git-submodule .stamps/autoconf
@@ -263,7 +266,7 @@ endif
 FORCE:
 
 .PHONY:	image build clean mrproper init prepare update update-offline
-.PHONY:	commit-submodules init reconfigure
+.PHONY:	commit-submodules init reconfigure clone
 .PHONY:	FORCE
 
 ########################################################################################
@@ -455,3 +458,32 @@ create-tag-recursive:
 	$(MAKE_ORIG) $@ _MODE=create-tag
 
 endif				# create-tag
+
+###############################################################################
+
+ifeq (${_MODE},clone)
+
+ifeq (${DST},)
+$(error DST not set)
+endif
+
+${DST} ${DST}/workspace:
+	mkdir -p $@
+
+.clone-init: | ${DST}
+	cd ${DST} && git init
+
+.clone_add-%:	.clone-init
+	cd ${DST} && $(GIT) submodule add -- '${_topdir}/$*' '$*'
+
+.clone_special-kernel: | ${DST}/workspace
+	$(GIT) clone --mirror ${_topdir}/workspace/kernel.git ${DST}/workspace/kernel.git
+
+${DST}/Makefile:${DST}/%:	%
+	install -p -m 0644 $< $@
+
+clone:	$(addprefix .clone_add-,${SUBMODULES}) ${DST}/Makefile /clone_special-kernel
+	cd ${DST} && $(GIT) submodule update --init
+	cd ${DST}/de.sigma-chemnitz && autoreconf -i -f
+
+endif
