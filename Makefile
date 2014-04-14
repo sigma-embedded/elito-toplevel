@@ -87,11 +87,28 @@ define _git_create_branch
 endef
 # }}} _git_create_branch
 
+# _git_init <repo-dir>,<alternates*>,<remote-name>,<remote-url>,<prefix>
 define _git_init
-	mkdir -p $2
-	-cd "$2" && { test -d .git/objects || $6 $$(GIT) init -q; }
-	$$(foreach a,$3,$$(call _register_alternate,$$a,$2))
-	-cd "$2" && $$(GIT) remote add $4 '$5'
+	mkdir -p $1
+	-cd "$1" && { test -d .git/objects || $5 $$(GIT) init -q; }
+	$$(foreach a,$2,$$(call _register_alternate,$$a,$1))
+	-cd "$1" && $$(GIT) remote add $3 '$4'
+	@touch $$@
+endef
+
+# _git_addfetch <repo-dir>,<remote-name>,<ref>
+define _git_addfetch
+	cd '$1' && $(GIT) config --add 'remote.$2.fetch' +'refs/$3:refs/remotes/$2/$3'
+	cd '$1' && $(GIT) config --add 'remote.$2.fetch' +'refs/$3:refs/$3'
+
+endef
+
+# _get_setfetch <repo-dir>,<remote-name>,<branches*>,<tags*>
+define _git_setfetch
+	echo '$1|$2|$3|$4'
+	-cd "$1" && $$(GIT) config --unset 'remote.$2.fetch'
+	$$(foreach b,$3,$$(call _git_addfetch,$1,$2,heads/$$b))
+	$$(foreach t,$4,$$(call _git_addfetch,$1,$2,tags/$$t))
 	@touch $$@
 endef
 
@@ -103,7 +120,7 @@ endef
 ##### _build_upstream_fetch(repo) #######
 define _build_upstream_fetch
 .stamps/upstream_init-$1:	| .stamps
-	$(call _git_init,$1,$${UPSTREAM_DIR_$1},$${ELITO_GLOBAL_ALTERNATES} $${UPSTREAM_ALTERNATES_$1},upstream,$${UPSTREAM_GIT_$1},$${_git_init_prefix})
+	$(call _git_init,$${UPSTREAM_DIR_$1},$${ELITO_GLOBAL_ALTERNATES} $${UPSTREAM_ALTERNATES_$1},upstream,$${UPSTREAM_GIT_$1},$${_git_init_prefix})
 
 .stamps/upstream_fetch-$1:	.stamps/upstream_init-$1
 	-cd $${UPSTREAM_DIR_$1} && $$(GIT) fetch upstream --no-tags +$${UPSTREAM_BRANCH_$1}:refs/remotes/upstream/$${UPSTREAM_BRANCH_$1}
@@ -111,16 +128,21 @@ define _build_upstream_fetch
 endef					# _build_upstream_fetch
 
 ##### _build_elito_fetch(repo) #######
+# _build_elito_fetch <repo>
 define _build_elito_fetch
 
 .stamps/elito_init-$1 \
 .stamps/upstream_init-$1:	_git_init_prefix=env GIT_DIR=.
 
 .stamps/elito_init-$1:	| .stamps
-	$(call _git_init,$1,$${ELITO_REPO_DIR_$1},$${ELITO_REPO_ALTERNATES_$1},\
-		--mirror elito,$${ELITO_REPO_URI_$1},$${_git_init_prefix})
+	$(call _git_init,$${ELITO_REPO_DIR_$1},$${ELITO_REPO_ALTERNATES_$1},\
+		elito,$${ELITO_REPO_URI_$1},$${_git_init_prefix})
 
-.stamps/elito_fetch-$1:		.stamps/elito_init-$1
+.stamps/elito_setfetch-$1:	.stamps/elito_init-$1
+	$(if $${ELITO_REPO_BRANCHES_$1},$(call \
+		_git_setfetch,$${ELITO_REPO_DIR_$1},elito,$${ELITO_REPO_BRANCHES_$1},$${ELITO_REPO_TAGS_$1}))
+
+.stamps/elito_fetch-$1:		.stamps/elito_setfetch-$1
 	-cd $${ELITO_REPO_DIR_$1} && $$(GIT) fetch elito
 	$(call _git_fetch,$1,$${ELITO_REPO_DIR_$1},elito,)
 
