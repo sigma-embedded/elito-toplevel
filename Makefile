@@ -1,6 +1,6 @@
 SHELL =		/bin/bash
 GIT =		git
-MAKE_ORIG =	$(MAKE) -f $(abspath $(firstword $(MAKEFILE_LIST)))
+MAKE_ORIG =	$(MAKE) -f $(abspath $(firstword $(MAKEFILE_LIST))) ELITO_DIR=$(abspath ${ELITO_DIR})
 
 ELITO_DIR =	de.sigma-chemnitz
 
