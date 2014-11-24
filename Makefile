@@ -45,6 +45,8 @@ export ELITO_CRT
 
 unexport M S
 
+_git_getdir = cd '$(abspath $1)' && _tmp=$$( $(GIT) rev-parse --git-dir ) && cd $${_tmp} && pwd -P
+
 _fetch_targets = \
 	$(addprefix .stamps/elito_fetch-,${ELITO_REPOS})
 
@@ -63,7 +65,7 @@ prepare:	.stamps/git-submodule
 	$(GIT) submodule init
 	$(GIT) submodule foreach 'cd $(abspath .) && $(GIT) config --replace-all submodule.$$name.update merge || :'
 	$(if ${_fetch_targets},$(MAKE_ORIG) ${_fetch_targets} _MODE=fetch)
-	$(GIT) submodule update
+	$(GIT) submodule update $(if ${ELITO_GLOBAL_ALTERNATES},--reference "`$(call _git_getdir,${ELITO_GLOBAL_ALTERNATES})`")
 	-$(GIT) submodule foreach "$(GIT) config --unset-all remote.orgin.fetch 'refs/tags/\*:refs/tags/\*' || :"
 	-$(GIT) submodule foreach "$(GIT) config --add remote.origin.fetch 'refs/tags/*:refs/tags/*' || :"
 	-$(GIT) submodule foreach '$(GIT) push . HEAD:refs/heads/${RELEASE_BRANCH} && $(GIT) checkout refs/heads/${RELEASE_BRANCH} || :'
@@ -74,8 +76,9 @@ ifeq (${_MODE},fetch)
 
 # {{{ _register_alternate(alternate, git-repo)
 define _register_alternate
-	g=`cd "$2" && $$(GIT) rev-parse --git-dir` && \
-	echo '$(abspath $1)' >> $$g/objects/info/alternates
+	cd "$2" && g=`$(GIT) rev-parse --git-dir` && \
+	o=`$(call _git_getdir,$1)` && \
+	echo "$$o/objects" >> $$g/objects/info/alternates
 
 endef
 # }}} _register_alternate
