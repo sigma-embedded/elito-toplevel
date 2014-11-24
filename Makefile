@@ -74,7 +74,7 @@ ifeq (${_MODE},fetch)
 
 # {{{ _register_alternate(alternate, git-repo)
 define _register_alternate
-	test -d $2/.git/objects && g=$2/.git || g=$2; \
+	g=`cd "$2" && $$(GIT) rev-parse --git-dir` && \
 	echo '$(abspath $1)' >> $$g/objects/info/alternates
 
 endef
