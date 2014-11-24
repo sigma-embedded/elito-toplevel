@@ -66,7 +66,7 @@ prepare:	.stamps/git-submodule
 	$(GIT) submodule update
 	-$(GIT) submodule foreach "$(GIT) config --unset-all remote.orgin.fetch 'refs/tags/\*:refs/tags/\*' || :"
 	-$(GIT) submodule foreach "$(GIT) config --add remote.origin.fetch 'refs/tags/*:refs/tags/*' || :"
-	-$(GIT) submodule foreach '$(GIT) push . HEAD:${RELEASE_BRANCH} && $(GIT) checkout ${RELEASE_BRANCH} || :'
+	-$(GIT) submodule foreach '$(GIT) push . HEAD:refs/heads/${RELEASE_BRANCH} && $(GIT) checkout refs/heads/${RELEASE_BRANCH} || :'
 	@touch $@
 
 ######################### {{{ _MODE == fetch #############
