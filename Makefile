@@ -62,7 +62,7 @@ prepare:	.stamps/git-submodule
 .stamps:
 	mkdir -p $@
 
-.stamps/git-submodule:	Makefile | .stamps
+.stamps/git-submodule:	${MAKEFILE_LIST} | .stamps
 	$(GIT) submodule init
 	$(GIT) submodule foreach 'cd $(abspath .) && $(GIT) config --replace-all submodule.$$name.update merge || :'
 	$(if ${_fetch_targets},$(MAKE_ORIG) ${_fetch_targets} _MODE=fetch)
@@ -142,7 +142,7 @@ define _build_elito_fetch
 	$(call _git_init,$${ELITO_REPO_DIR_$1},$${ELITO_REPO_ALTERNATES_$1},\
 		elito,$${ELITO_REPO_URI_$1},$${_git_init_prefix})
 
-.stamps/elito_setfetch-$1:	.stamps/elito_init-$1
+.stamps/elito_setfetch-$1:	.stamps/elito_init-$1 $${MAKEFILE_LIST}
 	$(if $${ELITO_REPO_BRANCHES_$1},$(call \
 		_git_setfetch,$${ELITO_REPO_DIR_$1},elito,$${ELITO_REPO_BRANCHES_$1},$${ELITO_REPO_TAGS_$1}))
 
