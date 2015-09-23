@@ -109,7 +109,7 @@ endef
 # _get_setfetch <repo-dir>,<remote-name>,<branches*>,<tags*>
 define _git_setfetch
 	echo '$1|$2|$3|$4'
-	-cd "$1" && $$(GIT) config --unset 'remote.$2.fetch'
+	-cd "$1" && $$(GIT) config --unset-all 'remote.$2.fetch'
 	$$(foreach b,$3,$$(call _git_addfetch,$1,$2,heads/$$b))
 	$$(foreach t,$4,$$(call _git_addfetch,$1,$2,tags/$$t))
 	@touch $$@
