@@ -34,6 +34,7 @@ endif
 -include ${_topdir}/.config
 -include ${_topdir}/.config_${DOMAIN}
 -include ${_topdir}/.config_${HOSTNAME}
+-include ${HOME}/.elito-config
 
 ifeq (${_MODE},configure)
 -include ./build-setup
